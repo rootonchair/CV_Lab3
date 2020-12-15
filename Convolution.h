@@ -1,4 +1,10 @@
 ﻿#pragma once
+#include "opencv2/opencv.hpp"
+#include "opencv2/highgui.hpp"
+
+using namespace cv;
+using namespace std;
+
 class Convolution
 {
 	vector<float> _kernel;// lưu giá trị của ma trận kernel dùng để tích chập
