@@ -1,4 +1,4 @@
-#include "Convolution.h"
+﻿#include "Convolution.h"
 
 vector<float> Convolution::GetKernel()
 {
@@ -16,6 +16,7 @@ int Convolution::DoConvolution(const Mat& sourceImage, Mat& destinationImage)
 {
 	if (sourceImage.data == NULL) return 1;
 
+	// kích thước kernel là chẵn
 	if (_kernelHeight % 2 == 0 || _kernelWidth % 2 == 0) return 1;
 
 	int topLeftX = _kernelWidth / 2;
@@ -23,13 +24,15 @@ int Convolution::DoConvolution(const Mat& sourceImage, Mat& destinationImage)
 	int botRightX = sourceImage.cols - topLeftX - 1;
 	int botRightY = sourceImage.rows - topLeftY - 1;
 
+	// ảnh đích chứa giá trị float
 	if (sourceImage.channels() == 1)
-		destinationImage = Mat(botRightY - topLeftY + 1, botRightX - topLeftX + 1, CV_8UC1);
+		destinationImage = Mat(botRightY - topLeftY + 1, botRightX - topLeftX + 1, CV_32FC1);
 	else if (sourceImage.channels() == 3)
-		destinationImage = Mat(botRightY - topLeftY + 1, botRightX - topLeftX + 1, CV_8UC3);
+		destinationImage = Mat(botRightY - topLeftY + 1, botRightX - topLeftX + 1, CV_32FC3);
 	else
 		return 1;
 
+	// Tạo mảng offset pixel
 	int* offset = new int[_kernelHeight * _kernelWidth];
 	auto ptr = offset;
 	for (int y = -_kernelHeight / 2; y <= _kernelHeight / 2; ++y)
@@ -39,8 +42,9 @@ int Convolution::DoConvolution(const Mat& sourceImage, Mat& destinationImage)
 			++ptr;
 		}
 
+	// chập kernel với ảnh
 	auto sData = sourceImage.data;
-	auto dData = destinationImage.data;
+	auto dData = (float*)destinationImage.data;
 	for (int i = topLeftY; i <= botRightY; ++i)
 		for (int j = topLeftX; j <= botRightX; ++j)
 		{
@@ -51,8 +55,6 @@ int Convolution::DoConvolution(const Mat& sourceImage, Mat& destinationImage)
 				for (int k = 0; k < _kernelHeight * _kernelWidth; ++k)
 					val += sData[sPos + offset[k]] * _kernel[k];
 
-				if ((int)val > 255) val = 255;
-				if ((int)val < 0) val = 0;
 				*dData = val;
 				++dData;
 				++sPos;
