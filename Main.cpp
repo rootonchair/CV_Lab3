@@ -27,27 +27,24 @@ int main(int argc, char* argv[])
 
 		if (strcmp(command, "--mean") == 0)
 		{
-			if (argc < 5)
+			if (argc < 4)
 				throw std::string("Invalid Syntax");
-			int kW = ParseInt(argv[3]);
-			int kH = ParseInt(argv[4]);
-			result = blur.BlurImage(orgImage, resultImage, kW, kH, 0);
+			int kS = ParseInt(argv[3]);
+			result = blur.BlurImage(orgImage, resultImage, kS, kS, 0);
 		}
 		else if (strcmp(command, "--median") == 0)
 		{
-			if (argc < 5)
+			if (argc < 4)
 				throw std::string("Invalid Syntax");
-			int kW = ParseInt(argv[3]);
-			int kH = ParseInt(argv[4]);
-			result = blur.BlurImage(orgImage, resultImage, kW, kH, 1);
+			int kS = ParseInt(argv[3]);
+			result = blur.BlurImage(orgImage, resultImage, kS, kS, 1);
 		}
 		else if (strcmp(command, "--gauss") == 0)
 		{
-			if (argc < 5)
+			if (argc < 4)
 				throw std::string("Invalid Syntax");
-			int kW = ParseInt(argv[3]);
-			int kH = ParseInt(argv[4]);
-			result = blur.BlurImage(orgImage, resultImage, kW, kH, 2);
+			int kS = ParseInt(argv[3]);
+			result = blur.BlurImage(orgImage, resultImage, kS, kS, 2);
 		}
 		else if (strcmp(command, "--sobel") == 0)
 		{

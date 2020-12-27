@@ -5,25 +5,11 @@
 #include <algorithm>
 #define pi 3.141592653589793238462643383279502884L /* pi */ 
 
-//void Sort(uchar* I)
-//{
-//	int n = sizeof(I);
-//	for (int i = 0; i < n - 1; i++)
-//		for (int j = i + 1; j < n; j++)
-//		{
-//			uchar temp;
-//			if (I[i] > I[j])
-//			{
-//				temp = I[i];
-//				I[i] = I[j];
-//				I[j] = temp;
-//			}
-//		}
-//}
-
 int Blur::BlurImage(const Mat& sourceImage, Mat& destinationImage, int kWidth, int kHeight, int method) {
 	if (sourceImage.empty())
 		return 1;
+	if (kHeight % 2 == 0 || kWidth % 2 == 0) return 1;
+	
 	Convolution Convo;
 	vector<float> kernel;
 	vector<int> offset;
@@ -54,36 +40,31 @@ int Blur::BlurImage(const Mat& sourceImage, Mat& destinationImage, int kWidth, i
 	}
 		break;
 	case 2: {
-		float sigma = 1.0; //phương sai
-		float inverse_sqrt2pi_sigma = 1 / (sqrt(2 * pi)*sigma), inverse_2_sigmasquare = 1 / (2 * sigma*sigma);
-		int n = kHeight*kWidth;
+		// Gaussian
 
-		//Tạo kernel (bộ lọc h)
-		int kHalfHeight = kHeight >> 1;
-		int kHalfWidth = kWidth >> 1;
-		float h, sum = 0.0;
-		for (int y=-kHalfHeight;y<=kHalfHeight;y++)
-			for (int x = -kHalfWidth; x <= kHalfWidth; x++) {
-				h = inverse_sqrt2pi_sigma*exp(-(y*y + x*x)*inverse_2_sigmasquare);
-				sum += h;
-				kernel.push_back(h);
-			}
+		// lấy sigma bằng 1/3 kích thước cửa sổ
+		auto kernel = FilterCreator(kWidth / 2, kWidth / 3.0);
 
-		//Chuẩn hóa kernel
-		for (int i = 0; i < n; i++)
-			kernel[i] /= sum;
-
-		//nhân chập ảnh với kernel
 		Convo.SetKernel(kernel, kWidth, kHeight);
-		return Convo.DoConvolution(sourceImage, destinationImage);
-		break;
+		Mat tmp;
+		Convo.DoConvolution(sourceImage, tmp);
+
+		destinationImage.create(tmp.rows, tmp.cols, sourceImage.type());
+
+		// đưa các giá trị float về uchar
+		auto pDes = destinationImage.data;
+		auto pTmp = (float*)tmp.data;
+
+		int num = tmp.cols * tmp.rows * tmp.channels();
+		for (int i = 0; i < num; ++i)
+		{
+			pDes[i] = pTmp[i];
+		}
+
+		return 0;
 	}
 	case 1:
 	{
-		if (sourceImage.data == NULL) return 1;
-
-		if (kHeight % 2 == 0 || kWidth % 2 == 0) return 1;
-
 		int topLeftX = kWidth / 2;
 		int topLeftY = kHeight / 2;
 		int botRightX = sourceImage.cols - topLeftX - 1;
@@ -96,6 +77,7 @@ int Blur::BlurImage(const Mat& sourceImage, Mat& destinationImage, int kWidth, i
 		else
 			return 1;
 
+		// tính mảng offset
 		offset.assign(kHeight * kWidth, 0);
 		auto ptr = offset.data();
 		for (int y = -kHeight / 2; y <= kHeight / 2; ++y)
@@ -116,7 +98,7 @@ int Blur::BlurImage(const Mat& sourceImage, Mat& destinationImage, int kWidth, i
 					vector<uchar> window(kWidth* kHeight, 0);
 					for (int k = 0; k < kWidth * kHeight; ++k)
 						window[k] = sData[sPos + offset[k]];
-
+					// sắp xếp và lấy trung vị
 					sort(window.begin(), window.end());
 					auto val = window[(kWidth * kHeight - 1) / 2];
 					*dData = val;
@@ -135,3 +117,33 @@ int Blur::BlurImage(const Mat& sourceImage, Mat& destinationImage, int kWidth, i
 
 Blur::Blur() {}
 Blur::~Blur() {}
+
+vector<float> Blur::FilterCreator(int R, double sigma)
+{
+	vector<float> result((R * 2 + 1) * (R * 2 + 1), 0);
+
+	auto ptr = result.data();
+	float sum = 0.0;
+	for (int x = -R; x <= R; x++)
+	{
+		for (int y = -R; y <= R; y++)
+		{
+			*ptr = (exp(-(x * x + y * y) / (2 * sigma * sigma)) / (2 * pi * sigma * sigma));
+			sum += *ptr;
+			++ptr;
+		}
+	}
+
+	// chuẩn hóa kernel
+	ptr = result.data();
+	for (int x = -R; x <= R; x++)
+	{
+		for (int y = -R; y <= R; y++)
+		{
+			*ptr /= sum;
+			++ptr;
+		}
+	}
+
+	return result;
+}

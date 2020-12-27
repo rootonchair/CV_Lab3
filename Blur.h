@@ -22,5 +22,11 @@ public:
 	int BlurImage(const Mat& sourceImage, Mat& destinationImage, int kWidth, int kHeight, int method);	
 	Blur();
 	~Blur();
+
+private:
+	/*
+	Hàm tạo kernel Gaussian với sigma và R là bán kính của sổ lọc
+	*/
+	vector<float> FilterCreator(int R, double sigma);
 };
 
